@@ -1,6 +1,6 @@
+from datetime import datetime
 import uuid
 from pydantic import BaseModel
-
 
 # Pydantic models
 # Input
@@ -19,8 +19,8 @@ class BookCreate(BaseModel):
 # Output extending Input + id
 class BookOut(BookCreate):
     id: uuid.UUID
-    created_at: str
-    updated_at: str | None = None
+    created_at: datetime 
+    updated_at: datetime | None = None
 
 class BookUpdate(BaseModel):
     title: str | None = None

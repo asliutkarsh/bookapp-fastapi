@@ -1,56 +1,62 @@
 import uuid
-from fastapi import HTTPException
 from typing import List
-# from src.books.book_data import books, book_id_counter
-from src.books.dto import BookCreate, BookOut, BookUpdate
-from fastapi import APIRouter
-from src.books.service import BookService
-from fastapi import Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.main import get_session
+from src.books.service import BookService
+from src.books.dto import BookCreate, BookUpdate, BookOut
+from src.common import ApiResponse
 
 book_router = APIRouter(prefix="/books")
-book_service = BookService()
+
+service = BookService()
 
 
-# Create a Book
-@book_router.post('/', status_code=201)
-async def create_book(
-    book: BookCreate,
-    session: AsyncSession = Depends(get_session)
-):
-    return await book_service.create_book(book=book, session=session)
+@book_router.post(
+    "/",
+    response_model=ApiResponse[BookOut, None],
+    status_code=status.HTTP_201_CREATED
+)
+async def create_book(book: BookCreate, session: AsyncSession = Depends(get_session)):
+    created = await service.create_book(session, book)
+    return ApiResponse(success=True, message="Book created successfully", data=created)
 
-# Get all Books with Pagination
-@book_router.get('/', response_model=List[BookOut])
-async def get_books(
-    skip: int = 0,
-    limit: int = 10,
-    session: AsyncSession = Depends(get_session)
-):
-    return await book_service.get_all_books(skip=skip, limit=limit, session=session)
 
-# Get a single Book by ID
-@book_router.get('/{book_id}', response_model=BookOut)
-async def get_book(
-    book_id: uuid.UUID,
-    session: AsyncSession = Depends(get_session)
-):
-    return await book_service.get_book(book_id=book_id, session=session)
+@book_router.get(
+    "/",
+    response_model=ApiResponse[List[BookOut], None],
+    status_code=status.HTTP_200_OK
+)
+async def get_books(skip: int = 0, limit: int = 10, session: AsyncSession = Depends(get_session)):
+    books = await service.get_all_books(session, skip, limit)
+    return ApiResponse(success=True, message="Books retrieved", data=books)
 
-# Update a Book by ID
-@book_router.put('/{book_id}', response_model=BookOut)
-async def update_book(
-    book_id: uuid.UUID,
-    book: BookUpdate,
-    session: AsyncSession = Depends(get_session)
-):
-    return await book_service.update_book(book_id=book_id, book=book, session=session)
 
-# Delete a Book by ID
-@book_router.delete('/{book_id}', status_code=204)
-async def delete_book(
-    book_id: uuid.UUID,
-    session: AsyncSession = Depends(get_session)
-):
-    return await book_service.delete_book(book_id=book_id, session=session)
+@book_router.get(
+    "/{book_id}",
+    response_model=ApiResponse[BookOut, None],
+    status_code=status.HTTP_200_OK
+)
+async def get_book(book_id: uuid.UUID, session: AsyncSession = Depends(get_session)):
+    book = await service.get_book(session, book_id)
+    return ApiResponse(success=True, message="Book retrieved", data=book)
+
+
+@book_router.put(
+    "/{book_id}",
+    response_model=ApiResponse[BookOut, None],
+    status_code=status.HTTP_200_OK
+)
+async def update_book(book_id: uuid.UUID, book: BookUpdate, session: AsyncSession = Depends(get_session)):
+    updated = await service.update_book(session, book_id, book)
+    return ApiResponse(success=True, message="Book updated", data=updated)
+
+
+@book_router.delete(
+    "/{book_id}",
+    response_model=ApiResponse[None, None],
+    status_code=status.HTTP_200_OK
+)
+async def delete_book(book_id: uuid.UUID, session: AsyncSession = Depends(get_session)):
+    await service.delete_book(session, book_id)
+    return ApiResponse(success=True, message="Book deleted")

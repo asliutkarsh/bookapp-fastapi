@@ -23,4 +23,4 @@ app = FastAPI(title="Book App API",
 
 register_all_errors(app)
 
-app.include_router(book_router, prefix="/api/v1", tags=["books"])
+app.include_router(book_router, prefix="/api/v1", tags=["Books"])

@@ -1,8 +1,8 @@
 from datetime import datetime
+import uuid
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.books.dto import BookCreate, BookUpdate
-import uuid
 from src.books.model import Book
 from src.error import BookNotFoundException, InvalidPaginationException
 
@@ -17,7 +17,7 @@ class BookService:
 
     async def get_all_books(self, session: AsyncSession, skip: int = 0, limit: int = 10) -> list[Book]:
         if skip < 0 or limit <= 0:
-            raise InvalidPaginationException(skip, limit)
+            raise InvalidPaginationException()
         statement = select(Book).offset(skip).limit(limit).order_by(Book.created_at.desc())
         result = await session.execute(statement)
         return result.scalars().all()
@@ -27,7 +27,7 @@ class BookService:
         result = await session.execute(statement)
         book = result.scalar_one_or_none()
         if not book:
-            raise BookNotFoundException(book_id)
+            raise BookNotFoundException()
         return book
 
     async def update_book(self, session: AsyncSession, book_id: uuid.UUID, book: BookUpdate) -> Book:
