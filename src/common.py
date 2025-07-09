@@ -2,12 +2,11 @@
 
 from typing import Generic, Optional, TypeVar
 from pydantic import BaseModel
-from pydantic.generics import GenericModel
 
 T = TypeVar("T")  # For data
 M = TypeVar("M")  # For metadata
 
-class ApiResponse(GenericModel, Generic[T, M]):
+class ApiResponse(BaseModel, Generic[T, M]):
     success: bool
     message: str
     data: Optional[T] = None
