@@ -3,6 +3,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from src.common import ApiResponse
 from fastapi import status
+
 class BookNotFoundException(Exception):
     """
     Exception raised when a book is not found in the database.
@@ -33,6 +34,18 @@ class WrongPasswordException(Exception):
 class InvalidPaginationException(Exception):
     """
     Exception raised for invalid pagination parameters.
+    """
+    pass
+
+class ExpiredSignatureError(Exception):
+    """
+    Exception raised when the token has expired.
+    """
+    pass
+
+class InvalidTokenError(Exception):
+    """
+    Exception raised when the token is invalid.
     """
     pass
 
@@ -140,3 +153,30 @@ def register_all_errors(app: FastAPI):
             status_code=exc.status_code,
             content=response.model_dump()
         )
+    
+    @app.exception_handler(ExpiredSignatureError)
+    async def expired_signature_exception_handler(request: Request, exc: ExpiredSignatureError):
+        response = ApiResponse[None, dict](
+            success=False,
+            message="Token has expired",
+            data=None,
+            metadata=None
+        )
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content=response.model_dump()
+        )
+    
+    @app.exception_handler(InvalidTokenError)
+    async def invalid_token_exception_handler(request: Request, exc: InvalidTokenError):
+        response = ApiResponse[None, dict](
+            success=False,
+            message="Invalid token",
+            data=None,
+            metadata=None
+        )
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content=response.model_dump()
+        )
+    

@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     POSTGRES_DB: str
     DB_PORT: int
     DB_HOST: str
+    JWT_SECRET: str
+    JWT_EXPIRY_MINUTES: int
     
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

@@ -8,6 +8,16 @@ class LoginRequest(BaseModel):
     username: str | None = Field(default=None, min_length=3)  
     password: str = Field(..., min_length=8)
     
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "email": "johndoe@example.com",
+                "username": "johndoe",
+                "password": "S!ecurepassword123"
+            }
+        }
+    }
+    
 class RegisterRequest(BaseModel):
     username: str = Field(..., min_length=3)
     first_name: str | None = None
@@ -78,3 +88,7 @@ class UserResponse(BaseModel):
             }
         }
     }
+
+class AuthResponse(BaseModel):
+    user: UserResponse
+    token: str

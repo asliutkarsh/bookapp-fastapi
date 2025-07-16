@@ -2,7 +2,7 @@ from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.dto import RegisterRequest, LoginRequest
 from src.auth.model import User
-from src.auth.utils import generate_passwd_hash
+from src.auth.utils import generate_passwd_hash, verify_passwd_hash, create_jwt
 from src.error import UserNotFoundException, WrongPasswordException, DuplicateEntityException 
 
 class UserService:
@@ -14,7 +14,8 @@ class UserService:
             raise DuplicateEntityException("User already exists")
         
         user = await self.create_user(user_data, session)
-        return user
+        token = create_jwt({"username": user.username})
+        return user, token
     
     async def login_user(self, login_data: LoginRequest, session: AsyncSession):
         if login_data.email:
@@ -25,7 +26,8 @@ class UserService:
             raise UserNotFoundException("User not found")
         if not verify_passwd_hash(login_data.password, user.password_hash):
             raise WrongPasswordException("Wrong password")
-        return user
+        token = create_jwt({"username": user.username})
+        return user, token
 
 
     

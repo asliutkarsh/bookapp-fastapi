@@ -7,7 +7,7 @@ from src.books.service import BookService
 from src.books.dto import BookCreate, BookUpdate, BookOut
 from src.common import ApiResponse
 
-book_router = APIRouter(prefix="/books")
+book_router = APIRouter(prefix="/books",)
 
 service = BookService()
 
