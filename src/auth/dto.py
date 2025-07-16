@@ -92,3 +92,4 @@ class UserResponse(BaseModel):
 class AuthResponse(BaseModel):
     user: UserResponse
     token: str
+    refresh_token: str

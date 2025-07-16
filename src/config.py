@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     DB_HOST: str
     JWT_SECRET: str
     JWT_EXPIRY_MINUTES: int
+    REFRESH_TOKEN_EXPIRY_MINUTES: int
     
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

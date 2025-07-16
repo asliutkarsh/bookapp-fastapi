@@ -1,10 +1,10 @@
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.auth.dto import RegisterRequest, LoginRequest
+from src.auth.dto import RegisterRequest, LoginRequest, UserResponse
 from src.auth.model import User
 from src.auth.utils import generate_passwd_hash, verify_passwd_hash, create_jwt
 from src.error import UserNotFoundException, WrongPasswordException, DuplicateEntityException 
-
+from src.config import Config
 class UserService:
     
     async def register_user(self, user_data: RegisterRequest, session: AsyncSession):
@@ -14,8 +14,15 @@ class UserService:
             raise DuplicateEntityException("User already exists")
         
         user = await self.create_user(user_data, session)
-        token = create_jwt({"username": user.username})
-        return user, token
+        user_data = {
+            "user_id": str(user.id),
+            "email": user.email,
+            "username": user.username,
+            "role": user.role
+        }
+        token = create_jwt(user_data)
+        refresh_token = create_jwt(user_data, Config.REFRESH_TOKEN_EXPIRY_MINUTES)
+        return user, token, refresh_token
     
     async def login_user(self, login_data: LoginRequest, session: AsyncSession):
         if login_data.email:
@@ -26,10 +33,21 @@ class UserService:
             raise UserNotFoundException("User not found")
         if not verify_passwd_hash(login_data.password, user.password_hash):
             raise WrongPasswordException("Wrong password")
-        token = create_jwt({"username": user.username})
-        return user, token
+        user_data = {
+            "user_id": str(user.id),
+            "email": user.email,
+            "username": user.username,
+            "role": user.role
+        }
+        token = create_jwt(user_data)
+        refresh_token = create_jwt(user_data, Config.REFRESH_TOKEN_EXPIRY_MINUTES)
+        return user, token, refresh_token
 
-
+    async def get_user_by_id(self, user_id: int, session: AsyncSession):
+        statement = select(User).where(User.id == user_id)
+        result = await session.exec(statement)
+        user = result.first()
+        return user
     
     async def get_user_by_email(self, email: str, session: AsyncSession):
         statement = select(User).where(User.email == email)

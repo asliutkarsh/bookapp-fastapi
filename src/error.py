@@ -49,6 +49,18 @@ class InvalidTokenError(Exception):
     """
     pass
 
+class AccessTokenRequired(Exception):
+    """
+    Exception raised when the access token is required but not provided.
+    """
+    pass
+
+class RefreshTokenRequired(Exception):
+    """
+    Exception raised when the refresh token is required but not provided.
+    """
+    pass
+
 def register_all_errors(app: FastAPI):
     @app.exception_handler(BookNotFoundException)
     async def book_not_found_exception_handler(request: Request, exc: BookNotFoundException):
@@ -172,6 +184,32 @@ def register_all_errors(app: FastAPI):
         response = ApiResponse[None, dict](
             success=False,
             message="Invalid token",
+            data=None,
+            metadata=None
+        )
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content=response.model_dump()
+        )
+        
+    @app.exception_handler(AccessTokenRequired)
+    async def access_token_required_exception_handler(request: Request, exc: AccessTokenRequired):
+        response = ApiResponse[None, dict](
+            success=False,
+            message="Access token required",
+            data=None,
+            metadata=None
+        )
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content=response.model_dump()
+        )
+        
+    @app.exception_handler(RefreshTokenRequired)
+    async def refresh_token_required_exception_handler(request: Request, exc: RefreshTokenRequired):
+        response = ApiResponse[None, dict](
+            success=False,
+            message="Refresh token required",
             data=None,
             metadata=None
         )

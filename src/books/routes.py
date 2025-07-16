@@ -6,8 +6,9 @@ from src.db.main import get_session
 from src.books.service import BookService
 from src.books.dto import BookCreate, BookUpdate, BookOut
 from src.common import ApiResponse
+from src.auth.deps import get_current_user
 
-book_router = APIRouter(prefix="/books",)
+book_router = APIRouter(prefix="/books", dependencies=[Depends(get_current_user)])
 
 service = BookService()
 
