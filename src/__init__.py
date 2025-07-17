@@ -2,7 +2,7 @@ from src.books.routes import book_router
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from src.auth.routes import auth_router
-from src.error import register_all_errors
+from src.error import register_exception_handlers
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,7 +21,7 @@ app = FastAPI(title="Book App API",
              lifespan=lifespan
              )
 
-register_all_errors(app)
+register_exception_handlers(app)
 
 app.include_router(book_router, prefix="/api/v1", tags=["Books"])
 app.include_router(auth_router, prefix="/api/v1", tags=["Auth"])

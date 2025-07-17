@@ -1,11 +1,13 @@
 from fastapi.security import HTTPBearer
 from fastapi import Request
 from src.auth.utils import decode_jwt
-from src.error import InvalidTokenError, AccessTokenRequired
+from src.error import InvalidTokenError, AccountNotVerified, InsufficientPermission
 from src.db.main import get_session
 from src.auth.service import UserService
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
+from typing import List
+from src.auth.model import User
 
 user_service = UserService()
 
@@ -35,3 +37,15 @@ async def get_current_user(
     user_id = token_details["user_id"]
     user = await user_service.get_user_by_id(user_id, session)
     return user
+
+class RoleChecker:
+    def __init__(self, allowed_roles: List[str]) -> None:
+        self.allowed_roles = allowed_roles
+
+    def __call__(self, current_user: User = Depends(get_current_user)):
+        if not current_user.is_verified:
+            raise AccountNotVerified()
+        if current_user.role in self.allowed_roles:
+            return True
+
+        raise InsufficientPermission()

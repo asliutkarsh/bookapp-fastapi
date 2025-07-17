@@ -2,8 +2,8 @@ from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.dto import RegisterRequest, LoginRequest, UserResponse
 from src.auth.model import User
-from src.auth.utils import generate_passwd_hash, verify_passwd_hash, create_jwt
-from src.error import UserNotFoundException, WrongPasswordException, DuplicateEntityException 
+from src.auth.utils import generate_passwd_hash, verify_passwd_hash, create_jwt, decode_jwt
+from src.error import UserNotFoundException, WrongPasswordException, DuplicateEntityException, InvalidTokenError 
 from src.config import Config
 class UserService:
     
@@ -20,7 +20,7 @@ class UserService:
             "username": user.username,
             "role": user.role
         }
-        token = create_jwt(user_data)
+        token = create_jwt(user_data, Config.JWT_EXPIRY_MINUTES)
         refresh_token = create_jwt(user_data, Config.REFRESH_TOKEN_EXPIRY_MINUTES)
         return user, token, refresh_token
     
@@ -39,7 +39,22 @@ class UserService:
             "username": user.username,
             "role": user.role
         }
-        token = create_jwt(user_data)
+        token = create_jwt(user_data, Config.JWT_EXPIRY_MINUTES)
+        refresh_token = create_jwt(user_data, Config.REFRESH_TOKEN_EXPIRY_MINUTES)
+        return user, token, refresh_token
+    
+    async def refresh_token(self, refresh_token: str, session: AsyncSession):
+        payload = decode_jwt(refresh_token)
+        user = await self.get_user_by_id(payload["user_id"], session)
+        if user is None:
+            raise UserNotFoundException("User not found")
+        user_data = {
+            "user_id": str(user.id),
+            "email": user.email,
+            "username": user.username,
+            "role": user.role
+        }
+        token = create_jwt(user_data, Config.JWT_EXPIRY_MINUTES)
         refresh_token = create_jwt(user_data, Config.REFRESH_TOKEN_EXPIRY_MINUTES)
         return user, token, refresh_token
 

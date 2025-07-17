@@ -49,172 +49,76 @@ class InvalidTokenError(Exception):
     """
     pass
 
-class AccessTokenRequired(Exception):
+class AccountNotVerified(Exception):
     """
-    Exception raised when the access token is required but not provided.
-    """
-    pass
-
-class RefreshTokenRequired(Exception):
-    """
-    Exception raised when the refresh token is required but not provided.
+    Exception raised when the user's account is not verified.
     """
     pass
 
-def register_all_errors(app: FastAPI):
-    @app.exception_handler(BookNotFoundException)
-    async def book_not_found_exception_handler(request: Request, exc: BookNotFoundException):
-        response = ApiResponse[None, dict](
-            success=False,
-            message="Book Not Found",
-            data=None,
-            metadata=None
-        )
-        return JSONResponse(
-            status_code=status.HTTP_404_NOT_FOUND,
-            content=response.model_dump()
-        )
+class InsufficientPermission(Exception):
+    """
+    Exception raised when the user does not have the required permissions.
+    """
+    pass
 
+def register_exception_handlers(app: FastAPI):
+    """Registers all custom exception handlers for the app."""
+    
     @app.exception_handler(UserNotFoundException)
-    async def user_not_found_exception_handler(request: Request, exc: UserNotFoundException):
-        response = ApiResponse[None, dict](
-            success=False,
-            message="User Not Found",
-            data=None,
-            metadata=None
-        )
-        return JSONResponse(
-            status_code=status.HTTP_404_NOT_FOUND,
-            content=response.model_dump()
-        )
-    
+    async def user_not_found_handler(request: Request, exc: UserNotFoundException):
+        response = ApiResponse[None, None](success=False, message="User not found")
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content=response.model_dump())
+
     @app.exception_handler(DuplicateEntityException)
-    async def duplicate_entity_exception_handler(request: Request, exc: DuplicateEntityException):
-        response = ApiResponse[None, dict](
-            success=False,
-            message=exc.message,
-            data=None,
-            metadata=None
-        )
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content=response.model_dump()
-        )
-    
+    async def duplicate_entity_handler(request: Request, exc: DuplicateEntityException):
+        response = ApiResponse[None, None](success=False, message=exc.message)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump())
+
     @app.exception_handler(WrongPasswordException)
-    async def wrong_password_exception_handler(request: Request, exc: WrongPasswordException):
-        response = ApiResponse[None, dict](
-            success=False,
-            message="Wrong Password",
-            data=None,
-            metadata=None
-        )
-        return JSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content=response.model_dump()
-        )
+    async def wrong_password_handler(request: Request, exc: WrongPasswordException):
+        response = ApiResponse[None, None](success=False, message="Incorrect email or password")
+        return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content=response.model_dump())
 
-    @app.exception_handler(InvalidPaginationException)
-    async def invalid_pagination_exception_handler(request: Request, exc: InvalidPaginationException):
-        response = ApiResponse[None, dict](
-            success=False,
-            message="Invalid Pagination",
-            data=None,
-            metadata=None
-        )
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content=response.model_dump()
-        )
+    @app.exception_handler(ExpiredSignatureError)
+    async def expired_token_handler(request: Request, exc: ExpiredSignatureError):
+        response = ApiResponse[None, None](success=False, message="Token has expired")
+        return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content=response.model_dump())
 
-    @app.exception_handler(RequestValidationError)
-    async def validation_exception_handler(request: Request, exc: RequestValidationError):
-        response = ApiResponse[None, list](
-            success=False,
-            message="Validation Error",
-            data=None,
-            metadata={"error_description": exc.errors()}
-        )
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            content=response.model_dump()
-        )
-
-    @app.exception_handler(Exception)
-    async def http_exception_handler(request: Request, exc: Exception):
-        response = ApiResponse[None, dict](
-            success=False,
-            message="Internal Server Error",
-            data=None,
-            metadata={"error_description": str(exc)}
-        )
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content=response.model_dump()
-        )
-        
+    @app.exception_handler(InvalidTokenError)
+    async def invalid_token_handler(request: Request, exc: InvalidTokenError):
+        response = ApiResponse[None, None](success=False, message="Could not validate credentials")
+        return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content=response.model_dump())
+    
+    @app.exception_handler(AccountNotVerified)
+    async def account_not_verified_handler(request: Request, exc: AccountNotVerified):
+        response = ApiResponse[None, None](success=False, message="Account not verified")
+        return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content=response.model_dump())
+    
+    @app.exception_handler(InsufficientPermission)
+    async def insufficient_permission_handler(request: Request, exc: InsufficientPermission):
+        response = ApiResponse[None, None](success=False, message="Insufficient permissions")
+        return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content=response.model_dump())
+            
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException):
-        response = ApiResponse[None, dict](
-            success=False,
-            message="HTTP Exception",
-            data=None,
-            metadata={"error_description": exc.detail}
+        response = ApiResponse[None, None](
+            success=False, 
+            message=exc.detail
         )
         return JSONResponse(
             status_code=exc.status_code,
             content=response.model_dump()
         )
-    
-    @app.exception_handler(ExpiredSignatureError)
-    async def expired_signature_exception_handler(request: Request, exc: ExpiredSignatureError):
+
+    @app.exception_handler(Exception)
+    async def generic_exception_handler(request: Request, exc: Exception):
         response = ApiResponse[None, dict](
             success=False,
-            message="Token has expired",
-            data=None,
-            metadata=None
+            message="An unexpected internal server error occurred.",
+            metadata={"error_type": type(exc).__name__}
         )
         return JSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=response.model_dump()
         )
-    
-    @app.exception_handler(InvalidTokenError)
-    async def invalid_token_exception_handler(request: Request, exc: InvalidTokenError):
-        response = ApiResponse[None, dict](
-            success=False,
-            message="Invalid token",
-            data=None,
-            metadata=None
-        )
-        return JSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content=response.model_dump()
-        )
-        
-    @app.exception_handler(AccessTokenRequired)
-    async def access_token_required_exception_handler(request: Request, exc: AccessTokenRequired):
-        response = ApiResponse[None, dict](
-            success=False,
-            message="Access token required",
-            data=None,
-            metadata=None
-        )
-        return JSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content=response.model_dump()
-        )
-        
-    @app.exception_handler(RefreshTokenRequired)
-    async def refresh_token_required_exception_handler(request: Request, exc: RefreshTokenRequired):
-        response = ApiResponse[None, dict](
-            success=False,
-            message="Refresh token required",
-            data=None,
-            metadata=None
-        )
-        return JSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content=response.model_dump()
-        )
-    
+

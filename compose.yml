@@ -11,6 +11,9 @@ services:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
       POSTGRES_DB: books
+      JWT_SECRET: mysecret
+      JWT_EXPIRY_MINUTES: 60
+      REFRESH_TOKEN_EXPIRY_MINUTES: 2400
     depends_on:
       db:
         condition: service_healthy

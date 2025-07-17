@@ -45,6 +45,8 @@ class RegisterRequest(BaseModel):
             raise ValueError("Passwords do not match")
         return self
         
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
 
 class UpdateUserRequest(BaseModel):
     username: str  | None = Field(..., min_length=3)

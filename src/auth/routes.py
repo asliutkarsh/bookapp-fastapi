@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.common import ApiResponse
-from src.auth.dto import RegisterRequest, LoginRequest, UserResponse, AuthResponse
+from src.auth.dto import RegisterRequest, LoginRequest, UserResponse, AuthResponse, RefreshTokenRequest
 from src.auth.service import UserService
 from src.db.main import get_session
 from src.auth.deps import get_current_user
@@ -49,3 +49,20 @@ async def get_current_user(
 ):
     user_response = UserResponse.model_validate(user.model_dump())
     return ApiResponse(success=True, message="User retrieved successfully", data=user_response)
+
+@auth_router.post(
+    "/refresh", 
+    response_model=ApiResponse[AuthResponse, str],
+    status_code=status.HTTP_200_OK
+)
+async def refresh_token(
+    refresh_token: RefreshTokenRequest,
+    session: AsyncSession = Depends(get_session)
+):
+    user, token, refresh_token = await service.refresh_token(refresh_token.refresh_token, session)
+    data = AuthResponse(
+        user=UserResponse.model_validate(user.model_dump()),
+        token=token,
+        refresh_token=refresh_token
+    )
+    return ApiResponse(success=True, message="Token refreshed successfully", data=data)
