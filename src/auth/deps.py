@@ -46,6 +46,9 @@ class RoleChecker:
         if not current_user.is_verified:
             raise AccountNotVerified()
         if current_user.role in self.allowed_roles:
-            return True
+            return current_user
 
         raise InsufficientPermission()
+    
+admin_checker = RoleChecker(["admin"])
+user_checker = RoleChecker(["user"])

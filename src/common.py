@@ -11,3 +11,28 @@ class ApiResponse(BaseModel, Generic[T, M]):
     message: str
     data: Optional[T] = None
     metadata: Optional[M] = None
+
+log_config = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {
+            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        },
+    },
+    "handlers": {
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": "app.log",
+            "formatter": "default",
+        },
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+        },
+    },
+    "root": {
+        "level": "INFO",
+        "handlers": ["file", "console"],
+    },
+}    
